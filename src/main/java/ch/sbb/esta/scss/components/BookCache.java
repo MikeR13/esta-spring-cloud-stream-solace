@@ -1,0 +1,24 @@
+package ch.sbb.esta.scss.components;
+
+import ch.sbb.esta.scss.book.Book;
+import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookCache {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BookCache.class);
+
+    private final ConcurrentHashMap<Long, Book> booksById = new ConcurrentHashMap<>();
+
+    public void saveBook(final Book book) {
+        LOG.info("STEP 4: Got book {}", book);
+        booksById.put(book.getId(), book);
+    }
+
+    public Book findBookById(final Long id) {
+        return booksById.get(id);
+    }
+}
