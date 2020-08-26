@@ -42,7 +42,7 @@ public class BookRequestHandler {
                 .build();
 
         final RequestReplyHandler requestReplyHandler = new RequestReplyHandler(createEndpointName(requestId), session);
-        requestReplyHandler.start();
+        new Thread(() -> requestReplyHandler.start()).start();
 
         bookRequestProcessor.onNext(bookRequest);
 
