@@ -48,10 +48,10 @@ spring:
           contentType: "application/xml"
           # routing-expression: "headers['type']=='order'" # has no effect
           #routing-expression:  spring.cloud.function.routing-expression header to value T(java.lang.System).currentTimeMillis() % 2 == 0 ? 'even' : 'odd'
-          bookRequestReplyV1-in-0:
-            destination: v1/bookRequest
-          bookRequestReplyV1-out-0:
-            destination: v1/bookResponse
+        bookRequestReplyV1-in-0:
+          destination: v1/bookRequest
+        bookRequestReplyV1-out-0:
+          destination: v1/bookResponse
         bookRawXmlConsumerV1-in-0:
           destination: v1/bookXml
           group: rawxml
@@ -63,7 +63,7 @@ spring:
 
 solace:
   java:
-    host: ${SOLACE_HOSTS:}:${SOLACE_PORT}
+    host: ${SOLACE_HOSTS}
     msgVpn: ${SOLACE_MSG_VPN}
     clientUsername: ${SOLACE_USERNAME}
     clientPassword: ${SOLACE_PASSWORD}
