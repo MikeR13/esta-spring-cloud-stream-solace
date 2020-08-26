@@ -17,12 +17,12 @@ public class BookForwardHandler {
      * @return the forwarding message
      */
     public Message<Book> processBook(final Message<Book> bookMessage) {
-        LOG.info("STEP 2: Got book message {} - {}", bookMessage.getHeaders(), bookMessage.getPayload());
+        LOG.info("STEP 2a: Got book message: {} - {}", bookMessage.getHeaders(), bookMessage.getPayload());
 
         final Message<Book> forwardMessage = MessageBuilder
                 .withPayload(bookMessage.getPayload())
                 .build();
-        LOG.info("STEP 3: Forwarding book message {} - {}", forwardMessage.getHeaders(), forwardMessage.getPayload());
+        LOG.info("STEP 3: Forwarding book message: {} - {}", forwardMessage.getHeaders(), forwardMessage.getPayload());
 
         return forwardMessage;
     }

@@ -6,17 +6,22 @@ import ch.sbb.esta.scss.components.BookRequestHandler;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.swagger.annotations.ApiOperation;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 @RestController
 @RequestMapping("api/v1/")
 public class StartController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StartController.class);
 
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
 
@@ -49,9 +54,11 @@ public class StartController {
             }
 
         }
-        //        for (final Long id : allIds) {
-        //            final Book book = bookRequestHandler.requestBookWithId(id);
-        //        }
+
+        for (final Long id : allIds) {
+            final Book book = bookRequestHandler.requestBookWithId(id);
+            //LOG.
+        }
 
     }
 }

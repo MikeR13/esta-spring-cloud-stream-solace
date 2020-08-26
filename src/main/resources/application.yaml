@@ -26,7 +26,7 @@ spring:
             prefix: ${spring.cloud.stream.solace.default.prefix}
             autoBindDmq: true
       function:
-        definition: bookSupplierV1;bookFunctionV1;bookConsumerV1;bookRequestReplyV1;bookRawXmlConsumerV1;bookRawJsonConsumerV1
+        definition: bookSupplierV1;bookFunctionV1;bookConsumerV1;bookRequestReplyV1;bookRequestSupplierV1;bookRawXmlConsumerV1;bookRawJsonConsumerV1
       default:
         group: ${application.name}
         consumer:
@@ -48,10 +48,12 @@ spring:
           contentType: "application/xml"
           # routing-expression: "headers['type']=='order'" # has no effect
           #routing-expression:  spring.cloud.function.routing-expression header to value T(java.lang.System).currentTimeMillis() % 2 == 0 ? 'even' : 'odd'
-          bookRequestReplyV1-in-0:
-            destination: v1/bookRequest
-          bookRequestReplyV1-out-0:
-            destination: v1/bookResponse
+        bookRequestReplyV1-in-0:
+          destination: v1/bookRequest
+        bookRequestReplyV1-out-0:
+          destination: v1/bookResponse
+        bookRequestSupplierV1-in-0:
+          destination: ${spring.cloud.stream.bindings.bookRequestReplyV1-in-0.destination}
         bookRawXmlConsumerV1-in-0:
           destination: v1/bookXml
           group: rawxml
@@ -63,7 +65,7 @@ spring:
 
 solace:
   java:
-    host: ${SOLACE_HOSTS:}:${SOLACE_PORT}
+    host: ${SOLACE_HOSTS}
     msgVpn: ${SOLACE_MSG_VPN}
     clientUsername: ${SOLACE_USERNAME}
     clientPassword: ${SOLACE_PASSWORD}
