@@ -9,8 +9,6 @@ import com.solace.spring.cloud.stream.binder.provisioning.SolaceQueueProvisioner
 import com.solacesystems.jcsmp.JCSMPException;
 import com.solacesystems.jcsmp.JCSMPSession;
 import com.solacesystems.jcsmp.SpringJCSMPFactory;
-import io.opentracing.contrib.spring.integration.messaging.OpenTracingChannelInterceptorAutoConfiguration;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,6 +23,8 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
+
+import javax.annotation.PostConstruct;
 
 @Configuration
 @EnableConfigurationProperties({SolaceExtendedBindingProperties.class})
@@ -57,13 +57,18 @@ public class SolaceMessageChannelBinderTracingConfiguration {
     }
 
     @Bean
+    JCSMPSession jcsmpSession() {
+        return jcsmpSession;
+    }
+
+    @Bean
     SolaceMessageChannelBinder solaceMessageChannelBinder(
             final SolaceOutboundMessageTracingAspect outputMessageTracingAspect,
             final SolaceInboundMessageTracingAspect inboundMessageTracingAspect) {
         final SolaceMessageChannelBinder binder = new SolaceMessageChannelBinder(jcsmpSession, provisioningProvider()) {
             @Override
             protected MessageHandler createProducerMessageHandler(ProducerDestination destination, ExtendedProducerProperties<SolaceProducerProperties> producerProperties,
-                    MessageChannel errorChannel) {
+                                                                  MessageChannel errorChannel) {
                 final MessageHandler messageHandler = super.createProducerMessageHandler(destination, producerProperties, errorChannel);
                 return ProxyUtil.createProxy(messageHandler, outputMessageTracingAspect);
             }

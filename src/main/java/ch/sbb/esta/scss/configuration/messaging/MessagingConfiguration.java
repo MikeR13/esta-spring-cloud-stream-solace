@@ -1,20 +1,17 @@
 package ch.sbb.esta.scss.configuration.messaging;
 
 import ch.sbb.esta.scss.book.Book;
-import ch.sbb.esta.scss.components.BookCache;
-import ch.sbb.esta.scss.components.BookForwardHandler;
-import ch.sbb.esta.scss.components.BookPublisher;
-import ch.sbb.esta.scss.components.BookReplyHandler;
-import ch.sbb.esta.scss.components.BookRequestHandler;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import ch.sbb.esta.scss.components.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Configuration
 public class MessagingConfiguration {
@@ -37,23 +34,24 @@ public class MessagingConfiguration {
     }
 
     @Bean
-    public Function<Message<Long>, Message<Book>> bookRequestReplyV1(final BookReplyHandler bookReplyHandler) {
+    public Function<Message<BookRequest>, Message<Book>> bookRequestReplyV1(final BookReplyHandler bookReplyHandler) {
         return bookReplyHandler::findBookById;
     }
 
     @Bean
-    public Supplier<Flux<Long>> bookRequestSupplierV1(final BookRequestHandler bookRequestHandler) {
+    public Supplier<Flux<BookRequest>> bookRequestSupplierV1(final BookRequestHandler bookRequestHandler) {
         return bookRequestHandler::supplyBookRequestProcessor;
     }
 
     @Bean
     public Consumer<String> bookRawJsonConsumerV1() {
-        return (json) -> LOG.info("bookRawJsonConsumerV1 got : {}", json);
+        return (json) -> LOG.info("STEP 2a: bookRawJsonConsumerV1 got: {}", json);
     }
 
     @Bean
     public Consumer<byte[]> bookRawXmlConsumerV1() {
-        return (xml) -> LOG.info("bookRawXmlConsumerV1 got : {}", new String(xml));
+        return (xml) -> LOG.info("STEP 4b: bookRawXmlConsumerV1 got: {}", new String(xml));
     }
+
 
 }

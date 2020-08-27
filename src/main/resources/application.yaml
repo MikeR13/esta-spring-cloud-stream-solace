@@ -1,3 +1,5 @@
+
+
 application:
   name: @project.artifactId@
   version: @project.version@
@@ -26,7 +28,7 @@ spring:
             prefix: ${spring.cloud.stream.solace.default.prefix}
             autoBindDmq: true
       function:
-        definition: bookSupplierV1;bookFunctionV1;bookConsumerV1;bookRequestReplyV1;bookRawXmlConsumerV1;bookRawJsonConsumerV1
+        definition: bookSupplierV1;bookFunctionV1;bookConsumerV1;bookRequestReplyV1;bookRequestSupplierV1;bookRawXmlConsumerV1;bookRawJsonConsumerV1
       default:
         group: ${application.name}
         consumer:
@@ -52,6 +54,8 @@ spring:
           destination: v1/bookRequest
         bookRequestReplyV1-out-0:
           destination: v1/bookResponse
+        bookRequestSupplierV1-out-0:
+          destination: ${spring.cloud.stream.bindings.bookRequestReplyV1-in-0.destination}
         bookRawXmlConsumerV1-in-0:
           destination: v1/bookXml
           group: rawxml
@@ -96,3 +100,5 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+server:
+  port: 8088

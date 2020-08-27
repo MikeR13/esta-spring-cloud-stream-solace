@@ -1,10 +1,11 @@
 package ch.sbb.esta.scss.components;
 
 import ch.sbb.esta.scss.book.Book;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public class BookCache {
@@ -14,7 +15,7 @@ public class BookCache {
     private final ConcurrentHashMap<Long, Book> booksById = new ConcurrentHashMap<>();
 
     public void saveBook(final Book book) {
-        LOG.info("STEP 4: Got book {}", book);
+        LOG.info("STEP 4a: Got book: {}", book);
         booksById.put(book.getId(), book);
     }
 
