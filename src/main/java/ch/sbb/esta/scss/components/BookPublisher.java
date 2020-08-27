@@ -17,7 +17,7 @@ public class BookPublisher {
     private final EmitterProcessor<Book> bookEventProcessor = EmitterProcessor.create();
 
     public void publishBook(final Book book) {
-        LOG.info("Step 1: Publishing book: {}", book);
+        LOG.info("STEP 1: Publishing book: {}", book);
         bookEventProcessor.onNext(book);
     }
 

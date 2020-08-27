@@ -1,28 +1,44 @@
 package ch.sbb.esta.scss.configuration.messaging;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solacesystems.jcsmp.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cloud.function.context.FunctionRegistry;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RequestReplyHandler<T> {
+public class RequestReplyHandler<T> implements Runnable {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RequestReplyHandler.class);
+
+    private final Class<T> payloadClass;
     private final Topic topic;
     private final CountDownLatch latch;
     private AtomicReference<BytesXMLMessage> response;
     private AtomicReference<JCSMPException> errorResponse;
     private XMLMessageConsumer consumer;
     private JCSMPSession session;
+    private final FunctionRegistry functionRegistry;
+    private final ObjectMapper objectMapper;
 
-    public RequestReplyHandler(final String topicName, final JCSMPSession session) {
+    public RequestReplyHandler(final Class<T> payloadClass, final String topicName, final JCSMPSession session, final FunctionRegistry functionRegistry, final ObjectMapper objectMapper) {
+        this.payloadClass = payloadClass;
         this.topic = JCSMPFactory.onlyInstance().createTopic(topicName);
         this.session = session;
+        this.functionRegistry = functionRegistry;
+        this.objectMapper = objectMapper;
         latch = new CountDownLatch(1);
     }
 
-    public void start() {
+    @Override
+    public void run() {
         try {
             session.addSubscription(topic);
+            LOG.info("addSubscription {} - {}", topic.toString(), topic.isTemporary());
 
             response = new AtomicReference<>();
             errorResponse = new AtomicReference<>();
@@ -32,20 +48,12 @@ public class RequestReplyHandler<T> {
 
                 @Override
                 public void onReceive(final BytesXMLMessage msg) {
-                    if (msg instanceof TextMessage) {
-                        System.out.printf("TextMessage received: '%s'%n",
-                                ((TextMessage) msg).getText());
-                    } else {
-                        System.out.println("Message received.");
-                    }
-                    System.out.printf("Message Dump:%n%s%n", msg.dump());
                     response.set(msg);
                     latch.countDown();  // unblock main thread
                 }
 
                 @Override
                 public void onException(JCSMPException e) {
-                    System.out.printf("Consumer received exception: %s%n", e);
                     errorResponse.set(e);
                     latch.countDown();  // unblock main thread
                 }
@@ -56,15 +64,15 @@ public class RequestReplyHandler<T> {
         }
     }
 
-    public BytesXMLMessage getReply() {
+    public T getReply() {
         try {
-            latch.await(); // block here until message received, and latch will flip
+            latch.await(20, TimeUnit.SECONDS); // block here until message received, and latch will flip
         } catch (InterruptedException e) {
-            System.out.println("I was awoken while waiting");
+           LOG.info("I was awoken while waiting");
         }
         try {
             session.removeSubscription(topic);
-            consumer.stopSyncWait();
+            consumer.stopSync();
         } catch (JCSMPException e) {
             e.printStackTrace();
         }
@@ -72,9 +80,22 @@ public class RequestReplyHandler<T> {
         if (errorResponse.get() != null) {
             throw new RuntimeException(errorResponse.get());
         }
+        //Set<String> names = functionRegistry.getNames(MessageConverter.class);
 
 
-        return response.get();
+        final BytesXMLMessage bytesXMLMessage = response.get();
+        final String dump = bytesXMLMessage.dump();
+        LOG.info("Got {}", dump);
+
+        final byte[] payload = new byte[bytesXMLMessage.getAttachmentContentLength()];
+        bytesXMLMessage.readAttachmentBytes(payload);
+        final String jsonString = new String(payload);
+
+        try {
+            return objectMapper.readValue(jsonString, payloadClass);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

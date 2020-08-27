@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
@@ -37,7 +38,7 @@ public class StartController {
 
     @PostMapping(value = "lets/go/with/{bookAmount}")
     @ApiOperation(value = "Will send bookAmount books through the chain")
-    public void startChain(@PathVariable("bookAmount") final int bookAmount) {
+    public Set<Book> startChain(@PathVariable("bookAmount") final int bookAmount) {
         final Set<Long> allIds = new HashSet<>();
         for (int i = 0; i < bookAmount; i++) {
             final Span span = tracer.buildSpan("BOOK_chain").start();
@@ -52,13 +53,19 @@ public class StartController {
             } finally {
                 span.finish();
             }
-
         }
-
+        try {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        final Set<Book> result = new HashSet<>();
         for (final Long id : allIds) {
             final Book book = bookRequestHandler.requestBookWithId(id);
-            //LOG.
+            result.add(book);
         }
 
+        return result;
     }
+
 }

@@ -28,12 +28,15 @@ public class BookReplyHandler {
     }
 
     public Message<Book> findBookById(final Message<BookRequest> bookRequestMessage) {
+        LOG.info("STEP 6: Got: {}", bookRequestMessage);
         final BookRequest bookRequest = bookRequestMessage.getPayload();
         final Book book = bookCache.findBookById(bookRequest.getBookId());
 
 
-        LOG.info("STEP 5 Got {} respondig with {}", bookRequestMessage, book);
-        return requestReplySupport.createResponseMessage(book, bookRequest.getRequestId(), replyToDestination);
+        final Message<Book> respond = requestReplySupport.createResponseMessage(book, bookRequest.getRequestId(), replyToDestination);
+        LOG.info("STEP 7: Respondig with {}", respond);
+
+        return respond;
     }
 
 }

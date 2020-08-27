@@ -3,16 +3,19 @@ package ch.sbb.esta.scss.components;
 import ch.sbb.esta.scss.book.Book;
 import ch.sbb.esta.scss.configuration.messaging.BookRequest;
 import ch.sbb.esta.scss.configuration.messaging.RequestReplyHandler;
-import com.solacesystems.jcsmp.BytesXMLMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solacesystems.jcsmp.JCSMPSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.function.context.FunctionRegistry;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 @Component
@@ -24,16 +27,23 @@ public class BookRequestHandler {
 
     private final EmitterProcessor<BookRequest> bookRequestProcessor = EmitterProcessor.create();
     private final JCSMPSession session;
+    private final FunctionRegistry functionRegistry;
+    private final ObjectMapper objectMapper;
     private final String replyDestination;
+    private final ExecutorService executorService;
 
-    public BookRequestHandler(final JCSMPSession session,
+    public BookRequestHandler(final JCSMPSession session, final FunctionRegistry functionRegistry, final ObjectMapper objectMapper,
+                              @Value("${spring.cloud.stream.solace.default.prefix}") final String prefix,
                               @Value("${spring.cloud.stream.bindings.bookRequestReplyV1-out-0.destination}") final String replyDestination) {
         this.session = session;
-        this.replyDestination = replyDestination;
+        this.functionRegistry = functionRegistry;
+        this.objectMapper = objectMapper;
+        this.replyDestination = prefix + replyDestination;
+        executorService = Executors.newSingleThreadExecutor();
     }
 
     public Book requestBookWithId(final Long bookId) {
-        LOG.info("Step 6: Requesting book with id {}", bookId);
+        LOG.info("Step 5: Requesting book with id {}", bookId);
 
         final String requestId = UUID.randomUUID().toString();
         final BookRequest bookRequest = BookRequest.builder()
@@ -41,16 +51,16 @@ public class BookRequestHandler {
                 .requestId(requestId)
                 .build();
 
-        final RequestReplyHandler requestReplyHandler = new RequestReplyHandler(createEndpointName(requestId), session);
-        new Thread(() -> requestReplyHandler.start()).start();
+        final RequestReplyHandler<Book> requestReplyHandler = new RequestReplyHandler<>(Book.class, createEndpointName(requestId), session, functionRegistry, objectMapper);
+        executorService.submit(requestReplyHandler);
 
         bookRequestProcessor.onNext(bookRequest);
 
-        BytesXMLMessage reply = requestReplyHandler.getReply();
+        final Book reply = requestReplyHandler.getReply();
 
-        LOG.info("Step 7: received book with id {}", bookId);
+        LOG.info("STEP 8: received book {}", reply);
 
-        return null;
+        return reply;
     }
 
     private String createEndpointName(final String replyId) {

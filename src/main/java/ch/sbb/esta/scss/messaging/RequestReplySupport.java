@@ -13,6 +13,7 @@ import static ch.sbb.esta.scss.messaging.MessagingUtil.SEND_TO_DESTINATION;
 @Component
 public class RequestReplySupport {
 
+
     public <T> Message<T> createResponseMessage(final T payload, final String requestId, final String replyToDestination) {
         return MessageBuilder
                 .withPayload(payload)
